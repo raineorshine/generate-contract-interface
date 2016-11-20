@@ -1,7 +1,7 @@
 {
   "name": "generate-contract-interface",
   "version": "0.1.0",
-  "description": "Generates an interface solidity contract that instantiates a contract and returns its address.",
+  "description": "Generates an abstract contract in Solidity from a given contract.",
   "license": "ISC",
   "repository": "https://github.com/raineorshine/generate-contract-interface",
   "author": {

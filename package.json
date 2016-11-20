@@ -31,7 +31,6 @@
     "spawn-please": "^0.2.0"
   },
   "dependencies": {
-    "chai-as-promised": "^6.0.0",
     "get-stdin-promise": "^0.1.1",
     "solidity-parser": "^0.1.1"
   }

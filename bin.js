@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const generateInterface = require('./')
 const stdin = require('get-stdin-promise')
 

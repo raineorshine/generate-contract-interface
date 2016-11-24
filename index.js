@@ -24,7 +24,7 @@ module.exports = (src, options = {}) => {
     .filter(statement => statement.name !== contract.name)
 
   const stubs = functions
-    .map(f => '  ' + src.slice(f.start, f.modifiers[f.modifiers.length-1].end) + ';')
+    .map(f => ('  ' + src.slice(f.start, f.modifiers[f.modifiers.length-1].end)).trimRight() + ';')
     .join('\n')
 
   return `${pragmaSrc}

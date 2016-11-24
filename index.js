@@ -42,10 +42,13 @@ module.exports = (src, options = {}) => {
   const stubs = functions
     // .map(f => ('  ' + src.slice(f.start, f.notModifiers[f.notModifiers.length-1].end)).trimRight() + ';')
     .map(f => {
-      const nameAndParams = src.slice(f.start, f.params[f.params.length-1].end + 1)
-      const modSpace = f.notModifiers.length > 0 ? ' ' : ''
-      const notModifiers = f.notModifiers.map(notMod => src.slice(notMod.start, notMod.end).trim()).join(' ')
-      return `  ${nameAndParams}${modSpace}${notModifiers};`
+      const nameAndParams = f.params ?
+        src.slice(f.start, f.params[f.params.length-1].end + 1) :
+        `function ${f.name}()`
+      const notModifiers = f.notModifiers.length ?
+        ' ' + f.notModifiers.map(notMod => src.slice(notMod.start, notMod.end).trim()).join(' ') :
+        ''
+      return `  ${nameAndParams}${notModifiers};`
     })
     .join('\n')
 

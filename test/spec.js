@@ -9,6 +9,8 @@ chai.use(chaiAsPromised)
 
 const src = fs.readFileSync(path.join(__dirname, 'test.sol'), 'utf-8')
 const srcNoReturn = fs.readFileSync(path.join(__dirname, 'test-no-return.sol'), 'utf-8')
+const srcMod = fs.readFileSync(path.join(__dirname, 'test-mod.sol'), 'utf-8')
+
 const expectedOutput = `pragma solidity ^0.4.4;
 
 contract IMyContract {
@@ -19,6 +21,11 @@ const expectedOutputNoReturn = `pragma solidity ^0.4.4;
 contract IMyContract {
   function foo(uint a) public;
 }`
+const expectedOutputMod = `pragma solidity ^0.4.4;
+
+contract IMyContract {
+  function foo(uint a) public returns(uint);
+}`
 
 describe('generate-contract-interface', () => {
 
@@ -28,6 +35,10 @@ describe('generate-contract-interface', () => {
 
   it('should generate an interface of a function with no return value', () => {
     generateInterface(srcNoReturn).should.equal(expectedOutputNoReturn)
+  })
+
+  it('should not include modifiers', () => {
+    generateInterface(srcMod).should.equal(expectedOutputMod)
   })
 
   it('should read files from stdin', () => {

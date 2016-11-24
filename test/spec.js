@@ -10,6 +10,14 @@ chai.use(chaiAsPromised)
 const src = fs.readFileSync(path.join(__dirname, 'test.sol'), 'utf-8')
 const srcNoReturn = fs.readFileSync(path.join(__dirname, 'test-no-return.sol'), 'utf-8')
 const srcMod = fs.readFileSync(path.join(__dirname, 'test-mod.sol'), 'utf-8')
+const srcFallback = `pragma solidity ^0.4.4;
+
+contract MyContract {
+  function() payable {};
+  function foo(uint a) public constant returns(uint) {
+    return 10;
+  };
+}`
 
 const expectedOutput = `pragma solidity ^0.4.4;
 
@@ -26,6 +34,11 @@ const expectedOutputMod = `pragma solidity ^0.4.4;
 contract IMyContract {
   function foo(uint a) public returns(uint);
 }`
+const expectedOutputFallback = `pragma solidity ^0.4.4;
+
+contract IMyContract {
+  function foo(uint a) public constant returns(uint);
+}`
 
 describe('generate-contract-interface', () => {
 
@@ -39,6 +52,10 @@ describe('generate-contract-interface', () => {
 
   it('should not include modifiers', () => {
     generateInterface(srcMod).should.equal(expectedOutputMod)
+  })
+
+  it('should not include the fallback function', () => {
+    generateInterface(srcFallback).should.equal(expectedOutputFallback)
   })
 
   it('should read files from stdin', () => {

@@ -29,8 +29,12 @@ module.exports = (src, options = {}) => {
   const contract = ast.body.find(statement => statement.type === 'ContractStatement')
 
   const functions = contract.body
+    // only functions
     .filter(statement => statement.type === 'FunctionDeclaration')
+    // no constructor
     .filter(statement => statement.name !== contract.name)
+    // no fallback function
+    .filter(statement => statement.name)
     // filter out actual modifiers
     .map(f => {
       f.notModifiers = f.modifiers.filter(mod => mod.name in notModifiers)
@@ -40,7 +44,6 @@ module.exports = (src, options = {}) => {
   // console.log(functions[0])
 
   const stubs = functions
-    // .map(f => ('  ' + src.slice(f.start, f.notModifiers[f.notModifiers.length-1].end)).trimRight() + ';')
     .map(f => {
       const nameAndParams = f.params ?
         src.slice(f.start, f.params[f.params.length-1].end + 1) :

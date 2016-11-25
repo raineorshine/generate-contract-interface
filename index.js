@@ -31,7 +31,7 @@ module.exports = (src, options = {}) => {
     .filter(statement => statement.name)
     // filter out actual modifiers
     .map(f => {
-      f.notModifiers = f.modifiers.filter(mod => mod.name in notModifiers)
+      f.notModifiers = f.modifiers ? f.modifiers.filter(mod => mod.name in notModifiers) : []
       return f
     })
 

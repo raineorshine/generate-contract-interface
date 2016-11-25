@@ -3,6 +3,7 @@ const SolidityParser = require('solidity-parser')
 // since the parser currently parser modifiers into the same heap as constant, public, private, etc, we need to whitelist these
 const notModifiers = {
   'constant': 1,
+  'payable': 1,
   'public': 1,
   'private': 1,
   'internal': 1,

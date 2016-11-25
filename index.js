@@ -12,14 +12,7 @@ const notModifiers = {
 module.exports = (src, options = {}) => {
 
   // parse contract
-  let ast
-  try {
-    ast = SolidityParser.parse(src)
-  }
-  catch(e) {
-    console.error('Error parsing contract', e)
-    process.exit(1)
-  }
+  const ast = SolidityParser.parse(src)
 
   // get pragma statement
   const pragma = ast.body.find(statement => statement.type === 'PragmaStatement')
@@ -40,8 +33,6 @@ module.exports = (src, options = {}) => {
       f.notModifiers = f.modifiers.filter(mod => mod.name in notModifiers)
       return f
     })
-
-  // console.log(functions[0])
 
   const stubs = functions
     .map(f => {

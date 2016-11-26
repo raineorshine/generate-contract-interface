@@ -124,7 +124,7 @@ module.exports = (src, options = {}) => {
     .filter(isPublicDeclaration)
   const getterStubs = getters.map(getter => `  function ${getter.name}() public constant returns(${getter.literal.literal});`)
 
-  const stubs = functionStubs.concat(getterStubs).join('\n')
+  const stubs = getterStubs.concat(functionStubs).join('\n')
 
   return `${pragmaSrc}contract I${contract.name} {
 ${stubs}

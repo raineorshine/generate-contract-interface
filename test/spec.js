@@ -10,6 +10,7 @@ chai.use(chaiAsPromised)
 const src = fs.readFileSync(path.join(__dirname, 'test.sol'), 'utf-8')
 const srcNoReturn = fs.readFileSync(path.join(__dirname, 'test-no-return.sol'), 'utf-8')
 const srcMod = fs.readFileSync(path.join(__dirname, 'test-mod.sol'), 'utf-8')
+
 const srcFallback = `pragma solidity ^0.4.4;
 
 contract MyContract {
@@ -17,6 +18,15 @@ contract MyContract {
   function foo(uint a) public constant returns(uint) {
     return 10;
   };
+}`
+
+const srcPrivate = `pragma solidity ^0.4.4;
+
+contract MyContract {
+  function foo() {};
+  function foo2() public {};
+  function bar() private {};
+  function baz() internal {};
 }`
 
 const expectedOutput = `pragma solidity ^0.4.4;
@@ -39,6 +49,12 @@ const expectedOutputFallback = `pragma solidity ^0.4.4;
 contract IMyContract {
   function foo(uint a) public constant returns(uint);
 }`
+const expectedOutputPrivate = `pragma solidity ^0.4.4;
+
+contract IMyContract {
+  function foo();
+  function foo2() public;
+}`
 
 describe('generate-contract-interface', () => {
 
@@ -56,6 +72,10 @@ describe('generate-contract-interface', () => {
 
   it('should not include the fallback function', () => {
     generateInterface(srcFallback).should.equal(expectedOutputFallback)
+  })
+
+  it('should not include private and internal functions', () => {
+    generateInterface(srcPrivate).should.equal(expectedOutputPrivate)
   })
 
   it('should read files from stdin', () => {

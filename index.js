@@ -23,7 +23,7 @@ function isFunction(statement) {
 /** Returns true if the given ast statement is a DeclarativeExpression. */
 function isDeclaration(statement) {
   // declarations are wrapped in an array for some reason
-  return statement[0] && statement[0].type === 'DeclarativeExpression'
+  return statement[0] && (statement[0].type === 'DeclarativeExpression' || statement[0].type === 'AssignmentExpression')
 }
 
 function isPublicDeclaration(statement) {
@@ -126,8 +126,8 @@ module.exports = (src, options = {}) => {
     })
 
   // generate interface stubs for public variable getters
-  const getters = contract.body.filter(and(isDeclaration))
-    .map(declaration => declaration[0])
+  const getters = contract.body.filter(isDeclaration)
+    .map(declaration => declaration[0].left || declaration[0])
     .filter(isPublicDeclaration)
   const getterStubs = getters.map(getter => `  function ${getter.name}() public constant returns(${getGetterReturnType(getter)});`)
 

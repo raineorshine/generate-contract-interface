@@ -49,6 +49,17 @@ contract IMyContract {
     generateInterface(src).should.equal(expectedOutput)
   })
 
+  it('should generate an interface with public variable involving assignments', () => {
+    const src = `contract MyContract {
+  uint public foo = 10;
+}
+`
+    const expectedOutput = `contract IMyContract {
+  function foo() public constant returns(uint);
+}`
+    generateInterface(src).should.equal(expectedOutput)
+  })
+
   it('should generate an interface with public mapping getters', () => {
     const src = `contract MyContract {
   mapping(address => bool) public foo;

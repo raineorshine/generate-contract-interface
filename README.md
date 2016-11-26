@@ -49,6 +49,10 @@ contract IMyContract {
 
 Before reporting, please makes sure your source is parseable via [solidity-parser](https://github.com/ConsenSys/solidity-parser).
 
+### Known Issues
+
+- Does not add inherited members.
+
 ## License
 
 ISC © [Raine Revere](https://github.com/raineorshine)

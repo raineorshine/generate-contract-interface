@@ -66,6 +66,13 @@ function toLookupObject(o, key) {
   return o
 }
 
+/** Gets the return type of the given public variable's getter (needs specific handling for mappings). */
+function getGetterReturnType(getter) {
+  return getter.literal.literal.type === 'MappingExpression'
+    ? getter.literal.literal.to.literal
+    : getter.literal.literal
+}
+
 module.exports = (src, options = {}) => {
 
   // parse contract
@@ -122,7 +129,7 @@ module.exports = (src, options = {}) => {
   const getters = contract.body.filter(and(isDeclaration))
     .map(declaration => declaration[0])
     .filter(isPublicDeclaration)
-  const getterStubs = getters.map(getter => `  function ${getter.name}() public constant returns(${getter.literal.literal});`)
+  const getterStubs = getters.map(getter => `  function ${getter.name}() public constant returns(${getGetterReturnType(getter)});`)
 
   const stubs = getterStubs.concat(functionStubs).join('\n')
 

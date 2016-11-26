@@ -49,6 +49,17 @@ contract IMyContract {
     generateInterface(src).should.equal(expectedOutput)
   })
 
+  it('should generate an interface with public mapping getters', () => {
+    const src = `contract MyContract {
+  mapping(address => bool) public foo;
+}
+`
+    const expectedOutput = `contract IMyContract {
+  function foo() public constant returns(bool);
+}`
+    generateInterface(src).should.equal(expectedOutput)
+  })
+
 
   it('should generate an interface of a function with no return value', () => {
     const src = `contract MyContract {

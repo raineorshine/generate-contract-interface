@@ -20,6 +20,16 @@ function isFunction(statement) {
   return statement.type === 'FunctionDeclaration'
 }
 
+/** Returns true if the given ast statement is a DeclarativeExpression. */
+function isDeclaration(statement) {
+  // declarations are wrapped in an array for some reason
+  return statement[0] && statement[0].type === 'DeclarativeExpression'
+}
+
+function isPublicDeclaration(statement) {
+  return statement.is_public
+}
+
 /** Returns true if the given function ast is public. */
 function isPublic(f) {
   return !f.modifiers || f.modifiers.every(mod => mod.name !== 'private' && mod.name !== 'internal')
@@ -75,6 +85,7 @@ module.exports = (src, options = {}) => {
   const enumRegexp = new RegExp(enumNames.join('|'), 'g')
   const replaceEnums = str => enumNames.length ? str.replace(enumRegexp, 'uint') : str
 
+  // get functions
   const functions = contract.body
     .filter(and(
       isFunction,
@@ -88,7 +99,8 @@ module.exports = (src, options = {}) => {
       return f
     })
 
-  const stubs = functions
+  // generate interface stubs for functions
+  const functionStubs = functions
     .map(f => {
       const nameAndParams = f.params
         // if there are params, slice the function name plus all params
@@ -105,7 +117,14 @@ module.exports = (src, options = {}) => {
 
       return `  ${nameAndParams}${notModifiers};`
     })
-    .join('\n')
+
+  // generate interface stubs for public variable getters
+  const getters = contract.body.filter(and(isDeclaration))
+    .map(declaration => declaration[0])
+    .filter(isPublicDeclaration)
+  const getterStubs = getters.map(getter => `  function ${getter.name}() public constant returns(${getter.literal.literal});`)
+
+  const stubs = functionStubs.concat(getterStubs).join('\n')
 
   return `${pragmaSrc}contract I${contract.name} {
 ${stubs}

@@ -37,6 +37,19 @@ contract IMyContract {
     generateInterface(src).should.equal(expectedOutput)
   })
 
+  it('should generate an interface with public variable getters', () => {
+    const src = `contract MyContract {
+  uint public foo;
+  uint private bar;
+}
+`
+    const expectedOutput = `contract IMyContract {
+  function foo() public constant returns(uint);
+}`
+    generateInterface(src).should.equal(expectedOutput)
+  })
+
+
   it('should generate an interface of a function with no return value', () => {
     const src = `contract MyContract {
   function foo(uint a) public {

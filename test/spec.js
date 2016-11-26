@@ -7,79 +7,127 @@ const chaiAsPromised = require("chai-as-promised")
 const should = chai.should()
 chai.use(chaiAsPromised)
 
-const src = fs.readFileSync(path.join(__dirname, 'test.sol'), 'utf-8')
-const srcNoReturn = fs.readFileSync(path.join(__dirname, 'test-no-return.sol'), 'utf-8')
-const srcMod = fs.readFileSync(path.join(__dirname, 'test-mod.sol'), 'utf-8')
+describe('generate-contract-interface', () => {
 
-const srcFallback = `pragma solidity ^0.4.4;
+  it('should generate an interface', () => {
+    const src = `contract MyContract {
+  function foo(uint a) public constant returns(uint) {
+  }
+}
+`
+    const expectedOutput = `contract IMyContract {
+  function foo(uint a) public constant returns(uint);
+}`
+    generateInterface(src).should.equal(expectedOutput)
+  })
+
+  it('should generate an interface with a pragma', () => {
+    const src = `pragma solidity ^0.4.4;
 
 contract MyContract {
+  function foo(uint a) public constant returns(uint) {
+  }
+}
+`
+    const expectedOutput = `pragma solidity ^0.4.4;
+
+contract IMyContract {
+  function foo(uint a) public constant returns(uint);
+}`
+    generateInterface(src).should.equal(expectedOutput)
+  })
+
+  it('should generate an interface of a function with no return value', () => {
+    const src = `contract MyContract {
+  function foo(uint a) public {
+  }
+}
+`
+    const expectedOutputNoReturn = `contract IMyContract {
+  function foo(uint a) public;
+}`
+    generateInterface(src).should.equal(expectedOutputNoReturn)
+  })
+
+  it('should not include modifiers', () => {
+    const src = `contract MyContract {
+  function foo(uint a) lock public returns(uint) {
+  }
+}
+`
+    const expectedOutput = `contract IMyContract {
+  function foo(uint a) public returns(uint);
+}`
+
+    generateInterface(src).should.equal(expectedOutput)
+  })
+
+  it('should not include the fallback function', () => {
+    const src = `contract MyContract {
   function() payable {};
   function foo(uint a) public constant returns(uint) {
     return 10;
   };
 }`
+    const expectedOutput = `contract IMyContract {
+  function foo(uint a) public constant returns(uint);
+}`
+    generateInterface(src).should.equal(expectedOutput)
+  })
 
-const srcPrivate = `pragma solidity ^0.4.4;
-
-contract MyContract {
+  it('should not include private and internal functions', () => {
+    const src = `contract MyContract {
   function foo() {};
   function foo2() public {};
   function bar() private {};
   function baz() internal {};
 }`
-
-const expectedOutput = `pragma solidity ^0.4.4;
-
-contract IMyContract {
-  function foo(uint a) public constant returns(uint);
-}`
-const expectedOutputNoReturn = `pragma solidity ^0.4.4;
-
-contract IMyContract {
-  function foo(uint a) public;
-}`
-const expectedOutputMod = `pragma solidity ^0.4.4;
-
-contract IMyContract {
-  function foo(uint a) public returns(uint);
-}`
-const expectedOutputFallback = `pragma solidity ^0.4.4;
-
-contract IMyContract {
-  function foo(uint a) public constant returns(uint);
-}`
-const expectedOutputPrivate = `pragma solidity ^0.4.4;
-
-contract IMyContract {
+    const expectedOutput = `contract IMyContract {
   function foo();
   function foo2() public;
 }`
 
-describe('generate-contract-interface', () => {
-
-  it('should generate an interface', () => {
     generateInterface(src).should.equal(expectedOutput)
   })
 
-  it('should generate an interface of a function with no return value', () => {
-    generateInterface(srcNoReturn).should.equal(expectedOutputNoReturn)
+  it('should replace enums in params with uint', () => {
+    const src = `contract MyContract {
+  enum MyEnum { A, B, C }
+  enum OtherEnum { D, E, F }
+  function foo(MyEnum e) {};
+  function bar(OtherEnum e) {};
+}`
+    const expectedOutput = `contract IMyContract {
+  function foo(uint e);
+  function bar(uint e);
+}`
+
+    generateInterface(src).should.equal(expectedOutput)
   })
 
-  it('should not include modifiers', () => {
-    generateInterface(srcMod).should.equal(expectedOutputMod)
-  })
+  it('should replace enums in returns with uint', () => {
+    const src = `contract MyContract {
+  enum MyEnum { A, B, C }
+  function foo() returns(MyEnum) {};
+}`
+    const expectedOutput = `contract IMyContract {
+  function foo() returns(uint);
+}`
 
-  it('should not include the fallback function', () => {
-    generateInterface(srcFallback).should.equal(expectedOutputFallback)
-  })
-
-  it('should not include private and internal functions', () => {
-    generateInterface(srcPrivate).should.equal(expectedOutputPrivate)
+    generateInterface(src).should.equal(expectedOutput)
   })
 
   it('should read files from stdin', () => {
-    return spawn('node', ['bin.js'], src).should.eventually.equal(expectedOutput + '\n')
+    const src = `contract MyContract {
+  function foo(uint a) public constant returns(uint) {
+  }
+}
+`
+    const expectedOutput = `contract IMyContract {
+  function foo(uint a) public constant returns(uint);
+}
+`
+    return spawn('node', ['bin.js'], src).should.eventually.equal(expectedOutput)
   })
 
 })

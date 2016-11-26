@@ -11,6 +11,11 @@ const notModifiers = {
 }
 
 /** Returns true if the given ast statement is a function. */
+function isEnum(statement) {
+  return statement.type === 'EnumDeclaration'
+}
+
+/** Returns true if the given ast statement is a function. */
 function isFunction(statement) {
   return statement.type === 'FunctionDeclaration'
 }
@@ -45,6 +50,12 @@ function and2(f, g) {
   return (...args) => f(...args) && g(...args)
 }
 
+/** Convert an array to a lookup object. */
+function toLookupObject(o, key) {
+  o[key] = 1
+  return o
+}
+
 module.exports = (src, options = {}) => {
 
   // parse contract
@@ -52,10 +63,17 @@ module.exports = (src, options = {}) => {
 
   // get pragma statement
   const pragma = ast.body.find(statement => statement.type === 'PragmaStatement')
-  const pragmaSrc = pragma ? src.slice(pragma.start, pragma.end) + '\n' : ''
+  const pragmaSrc = pragma ? src.slice(pragma.start, pragma.end) + '\n\n' : ''
 
   // get contract name
   const contract = ast.body.find(statement => statement.type === 'ContractStatement')
+
+  // generate a regular expression that matches any enum name that was defined in the contract
+  const enumNames = contract.body
+    .filter(isEnum)
+    .map(en => en.name)
+  const enumRegexp = new RegExp(enumNames.join('|'), 'g')
+  const replaceEnums = str => enumNames.length ? str.replace(enumRegexp, 'uint') : str
 
   const functions = contract.body
     .filter(and(
@@ -72,18 +90,24 @@ module.exports = (src, options = {}) => {
 
   const stubs = functions
     .map(f => {
-      const nameAndParams = f.params ?
-        src.slice(f.start, f.params[f.params.length-1].end + 1) :
-        `function ${f.name}()`
+      const nameAndParams = f.params
+        // if there are params, slice the function name plus all params
+        // replace enums in params with uint
+        ? replaceEnums(src.slice(f.start, f.params[f.params.length-1].end + 1))
+        // otherwise just construct the simple signature
+        : `function ${f.name}()`
+
+      // get privacy and other non-custom modifiers
       const notModifiers = f.notModifiers.length ?
-        ' ' + f.notModifiers.map(notMod => src.slice(notMod.start, notMod.end).trim()).join(' ') :
+        // replace enums in returns with uint
+        ' ' + f.notModifiers.map(notMod => replaceEnums(src.slice(notMod.start, notMod.end).trim())).join(' ') :
         ''
+
       return `  ${nameAndParams}${notModifiers};`
     })
     .join('\n')
 
-  return `${pragmaSrc}
-contract I${contract.name} {
+  return `${pragmaSrc}contract I${contract.name} {
 ${stubs}
 }`
 }

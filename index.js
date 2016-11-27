@@ -1,4 +1,7 @@
 const SolidityParser = require('solidity-parser')
+const flow = require('lodash.flow')
+const path = require('path')
+const fs = require('fs')
 
 // since the parser currently parser modifiers into the same heap as constant, public, private, etc, we need to whitelist these
 const notModifiers = {
@@ -73,7 +76,9 @@ function getGetterReturnType(getter) {
     : getter.literal.literal
 }
 
-module.exports = (src, options = {}) => {
+function generateInterface(src, options = {}) {
+
+  options.importRoot = options.importRoot || process.cwd()
 
   // parse contract
   const ast = SolidityParser.parse(src)
@@ -84,16 +89,35 @@ module.exports = (src, options = {}) => {
 
   // get contract name
   const contract = ast.body.find(statement => statement.type === 'ContractStatement')
+  const supers = contract.is.map(supercontract => supercontract.name).reduce(toLookupObject, {})
+
+  const importStubs = ast.body.filter(statement => statement.type === 'ImportStatement')
+    // get the import text
+    .map(statement => statement.from)
+    // filter out contracts that are not inherited
+    .filter(flow(
+      filepath => path.basename(filepath, '.sol'),
+      contractName => contractName in supers
+    ))
+    .map(flow(
+      // convert relative path to absolute
+      importfile => path.join(options.importRoot, importfile),
+      // read the file
+      filepath => fs.readFileSync(filepath, 'utf-8'),
+      // generate the interface of the inherited contract
+      src => generateInterface(src, { stubsOnly: true })
+    ))
 
   // generate a regular expression that matches any enum name that was defined in the contract
-  const enumNames = contract.body
+  const enumNames = contract.body ? contract.body
     .filter(isEnum)
     .map(en => en.name)
+    : []
   const enumRegexp = new RegExp(enumNames.join('|'), 'g')
   const replaceEnums = str => enumNames.length ? str.replace(enumRegexp, 'uint') : str
 
   // get functions
-  const functions = contract.body
+  const functions = contract.body ? contract.body
     .filter(and(
       isFunction,
       isPublic,
@@ -105,6 +129,7 @@ module.exports = (src, options = {}) => {
       f.notModifiers = f.modifiers ? f.modifiers.filter(mod => mod.name in notModifiers) : []
       return f
     })
+    : []
 
   // generate interface stubs for functions
   const functionStubs = functions
@@ -126,14 +151,20 @@ module.exports = (src, options = {}) => {
     })
 
   // generate interface stubs for public variable getters
-  const getters = contract.body.filter(isDeclaration)
+  const getters = contract.body ? contract.body
+    .filter(isDeclaration)
     .map(declaration => declaration[0].left || declaration[0])
     .filter(isPublicDeclaration)
+    : []
   const getterStubs = getters.map(getter => `  function ${getter.name}() public constant returns(${getGetterReturnType(getter)});`)
 
-  const stubs = getterStubs.concat(functionStubs).join('\n')
+  const stubs = [].concat(importStubs.length > 0 ? `\n  // inherited\n${importStubs}\n` : [], getterStubs, functionStubs).join('\n')
 
-  return `${pragmaSrc}contract I${contract.name} {
+  return options.stubsOnly
+    ? stubs
+    : `${pragmaSrc}contract I${contract.name} {
 ${stubs}
 }`
 }
+
+module.exports = generateInterface

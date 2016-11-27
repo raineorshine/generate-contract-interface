@@ -152,6 +152,15 @@ contract IMyContract {
     generateInterface(src).should.equal(expectedOutput)
   })
 
+  it('should have option to return only stubs', () => {
+    const src = `contract MyContract {
+  function foo();
+}`
+    const expectedOutput = `  function foo();`
+
+    generateInterface(src, { stubsOnly: true }).should.equal(expectedOutput)
+  })
+
   it('should read files from stdin', () => {
     const src = `contract MyContract {
   function foo(uint a) public constant returns(uint) {
@@ -163,6 +172,59 @@ contract IMyContract {
 }
 `
     return spawn('node', ['bin.js'], src).should.eventually.equal(expectedOutput)
+  })
+
+  it('should parse inherited contracts from imports', () => {
+    const src = `import './test/Imported.sol';
+
+contract MyContract is Imported {
+  function foo() {
+  }
+}
+`
+    const expectedOutput = `contract IMyContract {
+
+  // inherited
+  function imported();
+
+  function foo();
+}
+`
+    return spawn('node', ['bin.js'], src).should.eventually.equal(expectedOutput)
+  })
+
+  it('should not parse imported contracts that are not inherited', () => {
+    const src = `import './test/Imported.sol';
+
+contract MyContract {
+  function foo() {
+  }
+}
+`
+    const expectedOutput = `contract IMyContract {
+  function foo();
+}
+`
+    return spawn('node', ['bin.js'], src).should.eventually.equal(expectedOutput)
+  })
+
+  it('should parse imports with custom import root', () => {
+    const src = `import './Imported.sol';
+
+contract MyContract is Imported {
+  function foo() {
+  }
+}
+`
+    const expectedOutput = `contract IMyContract {
+
+  // inherited
+  function imported();
+
+  function foo();
+}
+`
+    return spawn('node', ['bin.js', '--importRoot', __dirname], src).should.eventually.equal(expectedOutput)
   })
 
 })

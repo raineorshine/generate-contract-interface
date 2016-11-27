@@ -32,6 +32,8 @@
   },
   "dependencies": {
     "get-stdin-promise": "^0.1.1",
-    "solidity-parser": "git://github.com/raineorshine/solidity-parser.git#326da052567245c9d9a0ba941bd9923aa89cda84"
+    "lodash.flow": "^3.5.0",
+    "solidity-parser": "git://github.com/raineorshine/solidity-parser.git#326da052567245c9d9a0ba941bd9923aa89cda84",
+    "yargs": "^6.4.0"
   }
 }

@@ -1,0 +1,4 @@
+contract Imported {
+  function imported() {
+  }
+}

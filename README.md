@@ -81,9 +81,13 @@ contract IMyContract {
 
 Before reporting, please makes sure your source is parseable via [solidity-parser](https://github.com/ConsenSys/solidity-parser).
 
-### Known Issues
+### Contributing Opportunities
+
+The following are known issues and great opportunities to make an open source contribution:
 
 - Does not handle multiple contracts per file.
+- Duplicates methods shadowing inherited methods.
+- Does not output multiple levels of inheritance properly.
 
 ## License
 
